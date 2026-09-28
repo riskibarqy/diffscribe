@@ -1,0 +1,10 @@
+.codegraph/
+/dist/
+/cmg
+/cmg.exe
+/diffscribe
+/diffscribe.exe
+.env
+.env.*
+!.env.example
+.DS_Store

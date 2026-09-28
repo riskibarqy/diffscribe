@@ -1,0 +1,35 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  binaries:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - run: go test ./...
+      - run: sh install_test.sh
+      - name: Build all targets
+        shell: bash
+        run: |
+          mkdir -p dist
+          for target in darwin/arm64 darwin/amd64 linux/amd64 linux/arm64 windows/amd64; do
+            os=${target%/*}
+            arch=${target#*/}
+            suffix=
+            if [ "$os" = windows ]; then suffix=.exe; fi
+            CGO_ENABLED=0 GOOS="$os" GOARCH="$arch" go build -o "dist/diffscribe-$os-$arch$suffix" .
+          done
+          cp install.sh install.ps1 dist/
+      - name: Upload to GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name }}" dist/*
